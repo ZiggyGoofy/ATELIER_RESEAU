@@ -37,12 +37,12 @@ docker logs --tail 40 lab_dhcp_server
 
 Complétez en vous appuyant sur **votre propre capture**&nbsp;:
 
-| Étape       | Émetteur (IP src) | Destinataire (IP dst) | MAC src / dst | Options DHCP notables |
-| ----------- | ----------------- | --------------------- | ------------- | --------------------- |
-| 1. Discover | `0.0.0.0`         | `255.255.255.255`     | …             | option 53 = …, option 55 = … |
-| 2. Offer    | …                 | …                     | …             | … |
-| 3. Request  | …                 | …                     | …             | … |
-| 4. ACK      | …                 | …                     | …             | … |
+| Étape | Émetteur (IP src) | Destinataire (IP dst) | MAC src / dst | Options DHCP notables |
+|-------------|-------------------|----------------------|---------------|----------------------|
+| 1. Discover | `0.0.0.0` | `255.255.255.255` | client / `ff:ff:ff:ff:ff:ff` | option 53 = 1, option 55 = liste params |
+| 2. Offer | `172.20.0.1` | `255.255.255.255` | serveur / `ff:ff:ff:ff:ff:ff` | option 53 = 2, option 51 = 43200s, option 3 = 172.20.0.1 |
+| 3. Request | `0.0.0.0` | `255.255.255.255` | client / `ff:ff:ff:ff:ff:ff` | option 53 = 3, option 54 = 172.20.0.1, option 50 = 172.20.0.2 |
+| 4. ACK | `172.20.0.1` | `255.255.255.255` | serveur / `ff:ff:ff:ff:ff:ff` | option 53 = 5, option 51 = 43200s, option 1 = 255.255.0.0 |
 
 ### 2. Configuration finale du client
 
@@ -56,7 +56,7 @@ Notez **l'IP attribuée, le masque, la passerelle, les DNS, la durée de bail**.
 
 > 💬 **Votre réponse :**
 >
-> _Remplacez ce texte par votre réponse (IP / masque / GW / DNS / bail)._
+> IP attribuée : 172.20.0.2 / 16 Masque : 255.255.0.0 Passerelle (GW) : 172.20.0.1 DNS : 8.8.8.8 Durée de bail : 43200 secondes (12h)
 
 ### 3. Questions de réflexion
 
@@ -66,14 +66,14 @@ Que se passerait-il avec n'importe quelle autre adresse&nbsp;?
 
 > 💬 **Votre réponse :**
 >
-> _Remplacez ce texte par votre réponse._
+>  Le client n'a pas encore d'IP donc il met 0.0.0.0 par défaut. Avec une autre adresse, ça créerait un conflit ou le serveur rejetterait la requête.
 
 **Question 2.** Pourquoi le **Request** est-il **rediffusé en broadcast**
 alors que le client connaît déjà l'IP du serveur après l'Offer&nbsp;?
 
 > 💬 **Votre réponse :**
 >
-> _Remplacez ce texte par votre réponse._
+> Le client ne peut toujours pas faire d'unicast sans IP configurée. Le broadcast permet aussi d'informer les autres serveurs DHCP que leur offre est refusée.
 
 **Question 3.** À quoi sert le **transaction ID (xid)** présent dans les
 4 paquets&nbsp;? Que se passerait-il s'il était omis dans un réseau avec
@@ -81,7 +81,7 @@ plusieurs serveurs DHCP&nbsp;?
 
 > 💬 **Votre réponse :**
 >
-> _Remplacez ce texte par votre réponse._
+> Le xid permet d'associer chaque réponse à la bonne requête. Sans lui, sur un réseau avec plusieurs serveurs DHCP, le client ne saurait plus quelle réponse lui est destinée.
 
 **Question 4.** Que renvoie le serveur si vous demandez explicitement une
 adresse hors du pool (essayez `dhclient -v -s 172.20.1.99 eth0`)&nbsp;?
@@ -89,14 +89,14 @@ Justifiez.
 
 > 💬 **Votre réponse :**
 >
-> _Remplacez ce texte par votre réponse._
+> Le serveur renvoie un DHCPNAK car l'adresse demandée est hors de son pool. Il ne peut pas attribuer ce qu'il ne gère pas.
 
 **Question 5.** La directive `dhcp-authoritative` est active sur notre
 serveur. Quel est son effet **comportemental** sur les NAK&nbsp;?
 
 > 💬 **Votre réponse :**
 >
-> _Remplacez ce texte par votre réponse._
+> dhcp-authoritative fait que le serveur envoie un NAK immédiat si l'adresse du client est inconnue, au lieu d'ignorer. Ça force le client à refaire un DORA complet rapidement.
 
 ### 4. Renouvellement de bail (T1/T2)
 
@@ -106,4 +106,4 @@ un rebind T2 (destinataire du paquet, comportement attendu).
 
 > 💬 **Votre réponse :**
 >
-> _Remplacez ce texte par votre réponse._
+>À T1, le client contacte son serveur en unicast pour renouveler. À T2, si pas de réponse, il broadcast vers n'importe quel serveur DHCP disponible pour tenter un rebind.
